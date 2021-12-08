@@ -11,7 +11,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Polls a queue of {@link Runnable} tasks and executes in a dedicated user thread
+ * Polls a queue of {@link Runnable} tasks and executes in a dedicated user thread.
+ * Tasks are removed from the queue whether they are successful or not.
  */
 public class RepeatableScheduledExecutor
 {
@@ -20,7 +21,6 @@ public class RepeatableScheduledExecutor
     private final long interval;
     private final TimeUnit timeUnit;
     private final Queue<Runnable> taskQueue = new LinkedBlockingQueue<>();
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     private final Runnable task = () -> {
         try
@@ -29,9 +29,11 @@ public class RepeatableScheduledExecutor
         }
         catch (Exception e)
         {
-            logger.error("Unable to execute task. Attempting restart.", e);
+            logger.error("Unable to finish task execution. Retrying on next scheduled interval.", e);
         }
     };
+
+    private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     public RepeatableScheduledExecutor(long interval, TimeUnit timeUnit)
     {
@@ -40,6 +42,15 @@ public class RepeatableScheduledExecutor
 
         this.interval = interval;
         this.timeUnit = timeUnit;
+    }
+
+    /**
+     * Overrides the default {@link #executor}
+     * @param executor Any {@link ScheduledExecutorService}
+     */
+    public void setExecutor(ScheduledExecutorService executor)
+    {
+        this.executor = executor;
     }
 
     /**
@@ -59,5 +70,13 @@ public class RepeatableScheduledExecutor
     public void run()
     {
         executor.scheduleAtFixedRate(task, 0, interval, timeUnit);
+    }
+
+    /**
+     * Terminates scheduler execution
+     */
+    public void shutdown()
+    {
+        executor.shutdown();
     }
 }
