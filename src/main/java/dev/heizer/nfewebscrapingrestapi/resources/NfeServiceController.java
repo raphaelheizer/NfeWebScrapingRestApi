@@ -116,7 +116,14 @@ public class NfeServiceController
     {
         final List<NfeServiceCountDTO> nfeServiceCountDTOS = nfeServiceHistoryService.countAllStatesByUnavailableStatus();
 
-        return new ResponseEntity<>(CollectionModel.of(nfeServiceCountDTOS), HttpStatus.OK);
+        CollectionModel<NfeServiceCountDTO> nfeServiceCountDTOCollectionModel =
+                CollectionModel.of(nfeServiceCountDTOS);
+
+        nfeServiceCountDTOCollectionModel
+                .add(linkTo(methodOn(NfeServiceController.class).nfeServiceHistoryService)
+                        .withSelfRel());
+
+        return new ResponseEntity<>(nfeServiceCountDTOCollectionModel, HttpStatus.OK);
     }
 
 }
