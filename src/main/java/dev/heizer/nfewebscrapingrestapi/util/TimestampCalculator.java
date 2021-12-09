@@ -1,6 +1,7 @@
 package dev.heizer.nfewebscrapingrestapi.util;
 
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -28,5 +29,11 @@ public class TimestampCalculator
     public static Timestamp now()
     {
         return new Timestamp(new Date().getTime());
+    }
+
+    public static Timestamp endOfDay(Date day)
+    {
+        long endOfDay = Duration.ofDays(1).toMillis();
+        return new Timestamp((day.getTime() + (endOfDay - 1)));
     }
 }

@@ -29,11 +29,13 @@ import java.util.stream.Collectors;
 import static dev.heizer.nfewebscrapingrestapi.models.NfeServiceStatusEnum.*;
 
 /**
- * TODO: Document me
+ * Scrapes {@value #URL_TO_SCRAPE} and persists data into the database at a fixed interval
  */
 @Service
 public class ScrapeNfeUrlAndGetData implements Runnable
 {
+    private static final String URL_TO_SCRAPE = "https://www.nfe.fazenda.gov.br/portal/disponibilidade.aspx";
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final List<NfeServiceHistory> serviceHistories = new ArrayList<>();
     private NfeServiceHistoryRepository nfeServiceHistoryRepository;
@@ -43,7 +45,7 @@ public class ScrapeNfeUrlAndGetData implements Runnable
     @Override
     public void run()
     {
-        Connection connection = Jsoup.connect("https://www.nfe.fazenda.gov.br/portal/disponibilidade.aspx");
+        Connection connection = Jsoup.connect(URL_TO_SCRAPE);
         Document document;
 
         try {document = connection.get();}

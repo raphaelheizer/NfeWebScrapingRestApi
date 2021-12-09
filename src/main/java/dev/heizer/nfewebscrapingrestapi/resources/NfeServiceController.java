@@ -1,25 +1,27 @@
 package dev.heizer.nfewebscrapingrestapi.resources;
 
+import dev.heizer.nfewebscrapingrestapi.exceptions.WrongDateFormatException;
+import dev.heizer.nfewebscrapingrestapi.models.NfeServiceCountDTO;
 import dev.heizer.nfewebscrapingrestapi.models.NfeServiceHistory;
-import dev.heizer.nfewebscrapingrestapi.models.NfeState;
-import dev.heizer.nfewebscrapingrestapi.repositories.AuthorizerRepository;
-import dev.heizer.nfewebscrapingrestapi.repositories.NfeServiceHistoryRepository;
-import dev.heizer.nfewebscrapingrestapi.repositories.NfeStateRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import dev.heizer.nfewebscrapingrestapi.services.NfeServiceHistoryService;
+import dev.heizer.nfewebscrapingrestapi.util.TimestampCalculator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
-import static dev.heizer.nfewebscrapingrestapi.util.TimestampCalculator.now;
-import static dev.heizer.nfewebscrapingrestapi.util.TimestampCalculator.timeWalk;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
@@ -27,109 +29,94 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RequestMapping("/services")
 public class NfeServiceController
 {
-    private final NfeServiceHistoryRepository nfeServiceHistoryRepository;
-    private final NfeStateRepository nfeStateRepository;
-    private final AuthorizerRepository authorizerRepository;
+    private static final Logger logger = LoggerFactory.getLogger(NfeServiceController.class);
 
-    @Autowired
-    Integer schedulerTime;
+    private final NfeServiceHistoryService nfeServiceHistoryService;
 
-    @Autowired
-    TimeUnit schedulerTimeTimeUnit;
-
-    public NfeServiceController(NfeServiceHistoryRepository nfeServiceHistoryRepository,
-                                NfeStateRepository nfeStateRepository,
-                                AuthorizerRepository authorizerRepository)
+    public NfeServiceController(NfeServiceHistoryService nfeServiceHistoryService)
     {
-        this.nfeServiceHistoryRepository = nfeServiceHistoryRepository;
-        this.nfeStateRepository = nfeStateRepository;
-        this.authorizerRepository = authorizerRepository;
+        this.nfeServiceHistoryService = nfeServiceHistoryService;
     }
 
-    @GetMapping
-    public HttpEntity<CollectionModel<NfeServiceHistory>> findAllEntries()
+    @GetMapping("/now")
+    public HttpEntity<CollectionModel<NfeServiceHistory>> getAllLastByStateName(@RequestParam String estado)
     {
-        List<NfeServiceHistory> models = nfeServiceHistoryRepository.findAll();
-
-        models.forEach(model -> {
-            model.add(
-                    linkTo(methodOn(NfeServiceController.class).findAllEntries())
-                            .slash(model.getId())
-                            .withSelfRel());
-        });
-        CollectionModel<NfeServiceHistory> collectionModel =
-                CollectionModel.of(models)
-                               .add(linkTo(methodOn(NfeServiceController.class)
-                                       .findAllEntries())
-                                       .withSelfRel());
-
-        return new ResponseEntity<>(collectionModel, HttpStatus.OK);
-    }
-
-    @GetMapping("/{id}")
-    public HttpEntity<NfeServiceHistory> findEntry(@PathVariable Long id)
-    {
-        NfeServiceHistory model = nfeServiceHistoryRepository.findById(id)
-                                                             .orElseThrow();
-
-        model.add(linkTo(methodOn(NfeServiceController.class)
-                .findEntry(id))
-                .withSelfRel());
-
-        return new ResponseEntity<>(model, HttpStatus.OK);
-    }
-
-    @GetMapping(params = "autorizador")
-    public HttpEntity<CollectionModel<NfeServiceHistory>> findAllEntriesByState(
-            @RequestParam("autorizador") String authorizer)
-    {
-        List<NfeServiceHistory> serviceHistoriesByState =
-                nfeServiceHistoryRepository.findAllByAuthorizer_name(authorizer);
-
-        serviceHistoriesByState.forEach(model -> {
-            model.add(linkTo(methodOn(NfeServiceController.class).findAllEntriesByState(authorizer))
-                    .slash(model.getId())
-                    .withSelfRel());
-        });
-
-        CollectionModel<NfeServiceHistory> collectionModel = CollectionModel.of(serviceHistoriesByState);
-
-        collectionModel
-                .add(linkTo(methodOn(NfeServiceController.class).findAllEntriesByState(authorizer))
-                        .withSelfRel());
-
-        return new ResponseEntity<>(collectionModel, HttpStatus.OK);
-    }
-
-    @GetMapping("/last")
-    public HttpEntity<CollectionModel<NfeServiceHistory>> findLastByStateName(@RequestParam String estado)
-    {
-        List<NfeState> nfeStates = nfeStateRepository.findAllByName(estado.toUpperCase(Locale.ROOT));
-        List<NfeServiceHistory> nfeServiceHistories = new ArrayList<>();
-
-        Timestamp timestamp = timeWalk(now(), schedulerTime, schedulerTimeTimeUnit);
-
-        nfeStates.forEach(state -> {
-            authorizerRepository.findByState_Id(state.getId())
-                                .forEach(authorizer ->
-                                {
-                                    nfeServiceHistoryRepository
-                                            .findAllByTimestampGreaterThanAndAuthorizer_Id(timestamp, authorizer.getId())
-                                            .forEach(nfeServiceHistory ->
-                                            {
-                                                nfeServiceHistories.add(nfeServiceHistory);
-
-                                                nfeServiceHistory
-                                                        .add(linkTo(methodOn(NfeServiceController.class)
-                                                                .findLastByStateName(estado))
-                                                                .withSelfRel());
-                                            });
-                                });
-        });
+        List<NfeServiceHistory> nfeServiceHistories = nfeServiceHistoryService.findAllLastByStateName(estado);
 
         CollectionModel<NfeServiceHistory> nfeServiceHistoryCollectionModel = CollectionModel.of(nfeServiceHistories);
-        return new ResponseEntity<>(nfeServiceHistoryCollectionModel, HttpStatus.OK);
 
-        // TODO: Não pode ser pelo TopByAuthorizer. Tem que buscar pelas últimas ocorrências!
+        nfeServiceHistories
+                .forEach(nfeServiceHistory -> {
+                    nfeServiceHistory.add(linkTo(methodOn(NfeServiceController.class)
+                            .getAllLastByStateName(estado))
+                            .withSelfRel());
+                });
+
+        nfeServiceHistoryCollectionModel
+                .add(linkTo(methodOn(NfeServiceController.class)
+                        .getAllLastByStateName(estado))
+                        .withSelfRel());
+
+        return new ResponseEntity<>(nfeServiceHistoryCollectionModel, HttpStatus.OK);
     }
+
+    @GetMapping(value = "/now", params = {"estado", "servico"})
+    public HttpEntity<CollectionModel<NfeServiceHistory>> getLastByStateName(@RequestParam String estado,
+                                                                             @RequestParam String servico)
+    {
+        List<NfeServiceHistory> nfeServiceHistory =
+                nfeServiceHistoryService.findLastByNameAndStateName(servico, estado);
+
+        CollectionModel<NfeServiceHistory> nfeServiceHistoryCollectionModel = CollectionModel.of(nfeServiceHistory);
+
+        nfeServiceHistoryCollectionModel
+                .add(linkTo(methodOn(NfeServiceController.class)
+                        .getLastByStateName(estado, servico)).withSelfRel());
+
+        return new ResponseEntity<>(nfeServiceHistoryCollectionModel, HttpStatus.OK);
+    }
+
+    @GetMapping(params = {"estado", "inicio", "fim"})
+    public HttpEntity<CollectionModel<NfeServiceHistory>> getByTimestampBetweenAndStateName(
+            @RequestParam String inicio,
+            @RequestParam String fim,
+            @RequestParam String estado)
+    {
+        final String dateFormat = "dd/MM/yyyy";
+
+        Date inicioDate;
+        Date fimDate;
+
+        try
+        {
+            inicioDate = new SimpleDateFormat(dateFormat).parse(inicio);
+            fimDate = new SimpleDateFormat(dateFormat).parse(fim);
+        }
+        catch (ParseException parseException)
+        {
+            throw new WrongDateFormatException(String.format("Incorrect date format. Should be dd/MM/yyy, found %s " +
+                    "and %s", inicio, fim), parseException);
+        }
+
+        List<NfeServiceHistory> nfeServiceHistories =
+                nfeServiceHistoryService.findAllBetweenTimestampAndStateName(new Timestamp(inicioDate.getTime()),
+                        TimestampCalculator.endOfDay(fimDate), estado);
+
+        CollectionModel<NfeServiceHistory> nfeServiceHistoryCollectionModel = CollectionModel.of(nfeServiceHistories);
+
+        nfeServiceHistoryCollectionModel.add(linkTo(methodOn(NfeServiceController.class)
+                .getByTimestampBetweenAndStateName(inicio, fim, estado))
+                .withSelfRel());
+
+        return new ResponseEntity<>(nfeServiceHistoryCollectionModel, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "countUnavailable")
+    public HttpEntity<CollectionModel<NfeServiceCountDTO>> getMostUnavailableState()
+    {
+        final List<NfeServiceCountDTO> nfeServiceCountDTOS = nfeServiceHistoryService.countAllStatesByUnavailableStatus();
+
+        return new ResponseEntity<>(CollectionModel.of(nfeServiceCountDTOS), HttpStatus.OK);
+    }
+
 }

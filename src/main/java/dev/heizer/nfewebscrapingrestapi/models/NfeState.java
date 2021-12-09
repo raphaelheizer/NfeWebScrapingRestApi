@@ -27,8 +27,8 @@ public class NfeState extends RepresentationModel<NfeState>
     @Override
     public String toString()
     {
-        return "NfeState{" +
-                "id=" + id +
+        return "NfeState {\n" +
+                "id=" + id + '\n' +
                 ", name='" + name + '\'' +
                 '}';
     }
