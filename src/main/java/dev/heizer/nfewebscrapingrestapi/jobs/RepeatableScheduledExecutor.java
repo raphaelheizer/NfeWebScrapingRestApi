@@ -1,7 +1,9 @@
 package dev.heizer.nfewebscrapingrestapi.jobs;
 
+import dev.heizer.nfewebscrapingrestapi.repositories.ServiceHistoryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.InvalidParameterException;
 import java.util.Queue;
@@ -21,7 +23,6 @@ public class RepeatableScheduledExecutor
     private final long interval;
     private final TimeUnit timeUnit;
     private final Queue<Runnable> taskQueue = new LinkedBlockingQueue<>();
-
     private final Runnable task = () -> {
         try
         {

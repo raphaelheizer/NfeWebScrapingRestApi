@@ -3,15 +3,15 @@ package dev.heizer.nfewebscrapingrestapi.models;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "authorizer", schema = "public")
-public class Authorizer
+@Table(name = "service", schema = "public")
+public class NfeService
 {
     @Id
-    @Column(name = "authorizer_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "service_id", nullable = false)
     private Long id;
 
-    @Column(name = "authorizer_name")
+    @Column(name = "service_name")
     private String name;
 
     public Long getId() {return id;}
@@ -21,13 +21,4 @@ public class Authorizer
     public String getName() {return name;}
 
     public void setName(String name) {this.name = name;}
-
-    @Override
-    public String toString()
-    {
-        return "Authorizer{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                '}';
-    }
 }

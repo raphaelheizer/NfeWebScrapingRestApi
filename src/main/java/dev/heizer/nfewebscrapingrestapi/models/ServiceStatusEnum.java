@@ -1,6 +1,6 @@
 package dev.heizer.nfewebscrapingrestapi.models;
 
-public enum ServiceStatus
+public enum ServiceStatusEnum
 {
     SERVICE_AVAILABLE,
     SERVICE_UNSTABLE,
