@@ -1,12 +1,14 @@
 package dev.heizer.nfewebscrapingrestapi.models;
 
+import org.springframework.hateoas.RepresentationModel;
+
 import javax.persistence.*;
 import java.sql.Timestamp;
 import java.util.Date;
 
 @Entity
 @Table(name = "service_history", schema = "public")
-public class ServiceHistory
+public class NfeServiceHistory extends RepresentationModel<NfeServiceHistory>
 {
     @Id
     @Column(name = "service_history_id")
@@ -23,7 +25,7 @@ public class ServiceHistory
 
     @Column(name = "service_history_availability")
     @Enumerated(EnumType.STRING)
-    private ServiceStatusEnum status;
+    private NfeServiceStatusEnum status;
 
     @Column(name = "service_history_timestamp")
     private Timestamp timestamp = new Timestamp(new Date().getTime());
@@ -32,9 +34,9 @@ public class ServiceHistory
 
     public void setId(Long id) {this.id = id;}
 
-    public ServiceStatusEnum getStatus() {return status;}
+    public NfeServiceStatusEnum getStatus() {return status;}
 
-    public void setStatus(ServiceStatusEnum status) {this.status = status;}
+    public void setStatus(NfeServiceStatusEnum status) {this.status = status;}
 
     @Column(insertable = false)
     public Timestamp getTimestamp() {return timestamp;}

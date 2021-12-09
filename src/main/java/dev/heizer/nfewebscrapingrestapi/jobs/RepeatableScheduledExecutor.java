@@ -1,9 +1,7 @@
 package dev.heizer.nfewebscrapingrestapi.jobs;
 
-import dev.heizer.nfewebscrapingrestapi.repositories.ServiceHistoryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.InvalidParameterException;
 import java.util.Queue;

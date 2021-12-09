@@ -5,15 +5,15 @@ import org.springframework.hateoas.RepresentationModel;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "service", schema = "public")
-public class NfeService extends RepresentationModel<NfeService>
+@Table(name = "state", schema = "public")
+public class NfeState extends RepresentationModel<NfeState>
 {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "service_id", nullable = false)
+    @Column(name = "state_id", nullable = false)
     private Long id;
 
-    @Column(name = "service_name")
+    @Column(name = "state_name")
     private String name;
 
     public Long getId() {return id;}
@@ -23,4 +23,13 @@ public class NfeService extends RepresentationModel<NfeService>
     public String getName() {return name;}
 
     public void setName(String name) {this.name = name;}
+
+    @Override
+    public String toString()
+    {
+        return "NfeState{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }

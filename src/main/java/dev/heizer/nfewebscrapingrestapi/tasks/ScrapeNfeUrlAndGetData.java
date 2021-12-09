@@ -4,11 +4,11 @@ import dev.heizer.nfewebscrapingrestapi.exceptions.NonUniqueResultException;
 import dev.heizer.nfewebscrapingrestapi.interfaces.TextMatchingValidator;
 import dev.heizer.nfewebscrapingrestapi.models.Authorizer;
 import dev.heizer.nfewebscrapingrestapi.models.NfeService;
-import dev.heizer.nfewebscrapingrestapi.models.ServiceHistory;
-import dev.heizer.nfewebscrapingrestapi.models.ServiceStatusEnum;
+import dev.heizer.nfewebscrapingrestapi.models.NfeServiceHistory;
+import dev.heizer.nfewebscrapingrestapi.models.NfeServiceStatusEnum;
 import dev.heizer.nfewebscrapingrestapi.repositories.AuthorizerRepository;
-import dev.heizer.nfewebscrapingrestapi.repositories.ServiceHistoryRepository;
-import dev.heizer.nfewebscrapingrestapi.repositories.ServiceRepository;
+import dev.heizer.nfewebscrapingrestapi.repositories.NfeServiceHistoryRepository;
+import dev.heizer.nfewebscrapingrestapi.repositories.NfeServiceRepository;
 import dev.heizer.nfewebscrapingrestapi.util.ServiceStatusValidator;
 import dev.heizer.nfewebscrapingrestapi.util.Validator;
 import org.jsoup.Connection;
@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static dev.heizer.nfewebscrapingrestapi.models.NfeServiceStatusEnum.*;
+
 /**
  * TODO: Document me
  */
@@ -33,9 +35,9 @@ import java.util.stream.Collectors;
 public class ScrapeNfeUrlAndGetData implements Runnable
 {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final List<ServiceHistory> serviceHistories = new ArrayList<>();
-    private ServiceHistoryRepository serviceHistoryRepository;
-    private ServiceRepository serviceRepository;
+    private final List<NfeServiceHistory> serviceHistories = new ArrayList<>();
+    private NfeServiceHistoryRepository nfeServiceHistoryRepository;
+    private NfeServiceRepository nfeServiceRepository;
     private AuthorizerRepository authorizerRepository;
 
     @Override
@@ -70,36 +72,35 @@ public class ScrapeNfeUrlAndGetData implements Runnable
 
             Authorizer authorizer = findAuthorizerByName(authorizerName);
 
-            List<ServiceStatusEnum> serviceStatusEnums = tableElement.children()
-                                                                     .stream()
-                                                                     .skip(1) // Should not be used with paralelism
-                                                                     .map(Element::children)
-                                                                     .map(newElement -> newElement.attr("src"))
-                                                                     .map(this::parseStatus)
-                                                                     .collect(Collectors.toList());
+            List<NfeServiceStatusEnum> nfeServiceStatusEnums = tableElement.children()
+                                                                           .stream()
+                                                                           .skip(1) // Should not be used with paralelism
+                                                                           .map(Element::children)
+                                                                           .map(newElement -> newElement.attr("src"))
+                                                                           .map(this::parseStatus)
+                                                                           .collect(Collectors.toList());
 
-
-            for (int i = 0; i < serviceStatusEnums.size(); i++)
+            for (int i = 0; i < nfeServiceStatusEnums.size(); i++)
             {
                 NfeService nfeService = getServiceByName(services.get(i));
-                ServiceHistory serviceHistory = new ServiceHistory();
+                NfeServiceHistory nfeServiceHistory = new NfeServiceHistory();
 
-                serviceHistory.setStatus(serviceStatusEnums.get(i));
-                serviceHistory.setService(nfeService);
-                serviceHistory.setAuthorizer(authorizer);
-                serviceHistories.add(serviceHistory);
+                nfeServiceHistory.setStatus(nfeServiceStatusEnums.get(i));
+                nfeServiceHistory.setService(nfeService);
+                nfeServiceHistory.setAuthorizer(authorizer);
+                serviceHistories.add(nfeServiceHistory);
             }
         });
 
         logger.info("Entities successfully updated");
-        serviceHistoryRepository.saveAll(serviceHistories);
+        nfeServiceHistoryRepository.saveAll(serviceHistories);
     }
 
 
     @Autowired
-    public void setServiceHistoryRepository(ServiceHistoryRepository serviceHistoryRepository)
+    public void setServiceHistoryRepository(NfeServiceHistoryRepository nfeServiceHistoryRepository)
     {
-        this.serviceHistoryRepository = serviceHistoryRepository;
+        this.nfeServiceHistoryRepository = nfeServiceHistoryRepository;
     }
 
     @Autowired
@@ -109,14 +110,14 @@ public class ScrapeNfeUrlAndGetData implements Runnable
     }
 
     @Autowired
-    public void setServiceRepository(ServiceRepository serviceRepository)
+    public void setServiceRepository(NfeServiceRepository nfeServiceRepository)
     {
-        this.serviceRepository = serviceRepository;
+        this.nfeServiceRepository = nfeServiceRepository;
     }
 
     private NfeService getServiceByName(String name)
     {
-        NfeService nfeService = serviceRepository.findByName(name);
+        NfeService nfeService = nfeServiceRepository.findByName(name);
 
         if (nfeService == null)
             throw new NullPointerException(String.format("No service exists with the name %s", name));
@@ -152,16 +153,16 @@ public class ScrapeNfeUrlAndGetData implements Runnable
         return servicesTableElements.first();
     }
 
-    private ServiceStatusEnum parseStatus(String text)
+    private NfeServiceStatusEnum parseStatus(String text)
     {
-        List<TextMatchingValidator<ServiceStatusEnum>> validatorList = new ArrayList<>();
+        List<TextMatchingValidator<NfeServiceStatusEnum>> validatorList = new ArrayList<>();
 
-        Validator<ServiceStatusEnum> validator = new Validator<ServiceStatusEnum>()
-                .setDefaultCase(ServiceStatusEnum.SERVICE_NOT_REGISTERED);
+        Validator<NfeServiceStatusEnum> validator = new Validator<NfeServiceStatusEnum>()
+                .setDefaultCase(SERVICE_NOT_REGISTERED);
 
-        validatorList.add(new ServiceStatusValidator<>("verde", ServiceStatusEnum.SERVICE_AVAILABLE));
-        validatorList.add(new ServiceStatusValidator<>("vermelho", ServiceStatusEnum.SERVICE_UNAVAILABLE));
-        validatorList.add(new ServiceStatusValidator<>("amarelo", ServiceStatusEnum.SERVICE_UNSTABLE));
+        validatorList.add(new ServiceStatusValidator<>("verde", SERVICE_AVAILABLE));
+        validatorList.add(new ServiceStatusValidator<>("vermelho", SERVICE_UNAVAILABLE));
+        validatorList.add(new ServiceStatusValidator<>("amarelo", SERVICE_UNSTABLE));
 
         return validator.validate(validatorList, text);
     }
