@@ -1,0 +1,160 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 12.9 (Ubuntu 12.9-0ubuntu0.20.04.1)
+-- Dumped by pg_dump version 12.9 (Ubuntu 12.9-0ubuntu0.20.04.1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Data for Name: authorizer; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.authorizer (authorizer_id, authorizer_name) FROM stdin;
+13	SVRS
+12	SVC-AN
+14	SVAN
+15	SVC-RS
+1	AM
+2	BA
+3	CE
+4	GO
+5	MG
+6	MS
+7	MT
+8	PE
+9	PR
+10	RS
+11	SP
+\.
+
+
+--
+-- Data for Name: service; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.service (service_id, service_name) FROM stdin;
+1	Autorização4
+2	Retorno Autorização4
+3	Inutilização4
+4	Consulta Protocolo4
+5	Status Serviço4
+6	Tempo Médio
+7	Consulta Cadastro4
+8	Recepção Evento4
+\.
+
+
+--
+-- Data for Name: service_history; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.service_history (service_history_id, service_history_timestamp, service_history_availability, service_history_authorizer_fkey, service_history_service_fkey) FROM stdin;
+\.
+
+
+--
+-- Data for Name: state; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.state (state_id, state_name, state_authorizer_fkey) FROM stdin;
+3	AM	15
+4	BA	15
+5	CE	15
+7	GO	15
+9	MT	15
+10	MS	15
+14	PR	15
+15	PE	15
+44	MA	15
+45	AM	1
+46	BA	2
+47	CE	3
+48	GO	4
+49	MG	5
+50	MS	6
+51	MT	7
+52	PE	8
+53	PR	9
+54	RS	10
+55	SP	11
+1	AL	13
+2	AP	13
+6	ES	13
+12	PA	13
+13	PB	13
+16	PI	13
+17	RJ	13
+18	RN	13
+19	RS	13
+20	RO	13
+21	RR	13
+22	SC	13
+24	SE	13
+25	TO	13
+26	DF	13
+27	AC	13
+8	MA	14
+11	MG	12
+23	SP	12
+28	AC	12
+29	AL	12
+30	AP	12
+31	DF	12
+32	ES	12
+33	PA	12
+34	PB	12
+35	PI	12
+36	RJ	12
+37	RN	12
+38	RO	12
+39	RR	12
+40	RS	12
+41	SC	12
+42	SE	12
+43	TO	12
+\.
+
+
+--
+-- Name: authorizer_authorizer_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.authorizer_authorizer_id_seq', 35, true);
+
+
+--
+-- Name: service_history_service_history_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.service_history_service_history_id_seq', 23041, true);
+
+
+--
+-- Name: service_service_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.service_service_id_seq', 8, true);
+
+
+--
+-- Name: state_state_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.state_state_id_seq', 55, true);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
