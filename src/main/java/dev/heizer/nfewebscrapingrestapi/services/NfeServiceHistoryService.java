@@ -11,10 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -69,6 +66,14 @@ public class NfeServiceHistoryService
                 .collect(Collectors.toList());
     }
 
+    public List<NfeServiceHistory> findLastByStateName(String estado)
+    {
+        return findAllAuthorizersByStateName(estado)
+                .stream().map(authorizer -> nfeServiceHistoryRepository.findAllByAuthorizer_name(authorizer.getName()))
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+    }
+
     /**
      * Finds all occurrences of {@link NfeServiceHistory} filtered by state name and service name
      * @param name service name to filter by
@@ -107,9 +112,9 @@ public class NfeServiceHistoryService
 
     /**
      * Counts all occurrences of {@link NfeServiceHistory} filtered by state
-     * @return {@link List<NfeServiceCountDTO}
+     * @return {@link List<NfeServiceCountDTO>}
      */
-    public List<NfeServiceCountDTO> countAllStatesByUnavailableStatus()
+    public List<NfeServiceCountDTO> countMostUnavailableStatus()
     {
         List<NfeServiceCountDTO> nfeServiceCountDTOS = new ArrayList<>();
 
@@ -130,7 +135,16 @@ public class NfeServiceHistoryService
 
                               nfeServiceCountDTOS.add(nfeServiceCountDTO);
                           });
-        return nfeServiceCountDTOS;
+
+        Long largestValue = nfeServiceCountDTOS.
+                stream()
+                .max(Comparator.comparing(NfeServiceCountDTO::getCount))
+                .map(NfeServiceCountDTO::getCount)
+                .orElseThrow();
+
+        return nfeServiceCountDTOS.stream().filter(nfeServiceCountDTO -> nfeServiceCountDTO.getCount() == largestValue)
+                                  .filter(nfeServiceCountDTO -> nfeServiceCountDTO.getCount() != 0)
+                                  .collect(Collectors.toList());
     }
 
     @Autowired
@@ -140,4 +154,6 @@ public class NfeServiceHistoryService
     @Autowired
     public void setSchedulerTimeTimeUnit(TimeUnit schedulerTimeTimeUnit)
     {this.schedulerTimeTimeUnit = schedulerTimeTimeUnit;}
+
+
 }
