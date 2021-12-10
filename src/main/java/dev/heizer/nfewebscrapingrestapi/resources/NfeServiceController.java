@@ -60,6 +60,28 @@ public class NfeServiceController
         return new ResponseEntity<>(nfeServiceHistoryCollectionModel, HttpStatus.OK);
     }
 
+    @GetMapping(value = "/now", params = "estado")
+    public HttpEntity<CollectionModel<NfeServiceHistory>> getByState(@RequestParam String estado)
+    {
+        List<NfeServiceHistory> nfeServiceHistory =
+                nfeServiceHistoryService.findLastByStateName(estado);
+
+        nfeServiceHistory
+                .forEach(nfeServiceHistoryIteration ->
+                        nfeServiceHistoryIteration.add(linkTo(methodOn(NfeServiceController.class)
+                                .getByState(estado))
+                                .withSelfRel()));
+
+        final CollectionModel<NfeServiceHistory> nfeServiceHistoryCollectionModel =
+                CollectionModel.of(nfeServiceHistory);
+
+        nfeServiceHistoryCollectionModel.add(linkTo(methodOn(NfeServiceController.class)
+                .getByState(estado))
+                .withSelfRel());
+
+        return new ResponseEntity<>(nfeServiceHistoryCollectionModel, HttpStatus.OK);
+    }
+
     @GetMapping(value = "/now", params = {"estado", "servico"})
     public HttpEntity<CollectionModel<NfeServiceHistory>> getLastByStateName(@RequestParam String estado,
                                                                              @RequestParam String servico)
@@ -114,13 +136,19 @@ public class NfeServiceController
     @GetMapping(value = "countUnavailable")
     public HttpEntity<CollectionModel<NfeServiceCountDTO>> getMostUnavailableState()
     {
-        final List<NfeServiceCountDTO> nfeServiceCountDTOS = nfeServiceHistoryService.countAllStatesByUnavailableStatus();
+        final List<NfeServiceCountDTO> nfeServiceCountDTOS = nfeServiceHistoryService.countMostUnavailableStatus();
 
-        CollectionModel<NfeServiceCountDTO> nfeServiceCountDTOCollectionModel =
+        nfeServiceCountDTOS.forEach(nfeServiceCountDTO -> {
+            nfeServiceCountDTO.add(linkTo(methodOn(NfeServiceController.class)
+                    .getByState(nfeServiceCountDTO.getStateName())).withSelfRel());
+        });
+
+        final CollectionModel<NfeServiceCountDTO> nfeServiceCountDTOCollectionModel =
                 CollectionModel.of(nfeServiceCountDTOS);
 
         nfeServiceCountDTOCollectionModel
-                .add(linkTo(methodOn(NfeServiceController.class).nfeServiceHistoryService)
+                .add(linkTo(methodOn(NfeServiceController.class)
+                        .getMostUnavailableState())
                         .withSelfRel());
 
         return new ResponseEntity<>(nfeServiceCountDTOCollectionModel, HttpStatus.OK);

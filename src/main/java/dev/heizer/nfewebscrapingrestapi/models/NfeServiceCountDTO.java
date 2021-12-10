@@ -1,8 +1,10 @@
 package dev.heizer.nfewebscrapingrestapi.models;
 
+import org.springframework.hateoas.RepresentationModel;
+
 import java.util.List;
 
-public class NfeServiceCountDTO
+public class NfeServiceCountDTO extends RepresentationModel<NfeServiceCountDTO>
 {
     private String stateName;
     private List<Authorizer> authorizers;
